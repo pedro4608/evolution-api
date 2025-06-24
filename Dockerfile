@@ -23,10 +23,9 @@ COPY ./Docker ./Docker
 
 RUN chmod +x ./Docker/scripts/* && dos2unix ./Docker/scripts/*
 
-# AQUI ESTÁ A CORREÇÃO:
-# Nós criamos um arquivo .env temporário com a informação que o script precisa
-# e então executamos o script. Este arquivo .env NÃO VAI para a versão final.
-RUN echo "DATABASE_CLIENT=postgresql" > .env && ./Docker/scripts/generate_database.sh
+# ESTA É A CORREÇÃO FINAL E DEFINITIVA.
+# Nós passamos a variável diretamente para o comando, sem criar arquivos.
+RUN DATABASE_CLIENT=postgresql ./Docker/scripts/generate_database.sh
 
 RUN npm run build
 
