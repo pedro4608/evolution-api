@@ -17,19 +17,21 @@ COPY ./src ./src
 COPY ./public ./public
 COPY ./prisma ./prisma
 COPY ./manager ./manager
-# A LINHA ABAIXO FOI REMOVIDA
-# COPY ./.env.example ./.env
 COPY ./runWithProvider.js ./
 COPY ./tsup.config.ts ./
-
 COPY ./Docker ./Docker
 
 RUN chmod +x ./Docker/scripts/* && dos2unix ./Docker/scripts/*
 
-RUN ./Docker/scripts/generate_database.sh
+# AQUI ESTÁ A CORREÇÃO:
+# Nós criamos um arquivo .env temporário com a informação que o script precisa
+# e então executamos o script. Este arquivo .env NÃO VAI para a versão final.
+RUN echo "DATABASE_CLIENT=postgresql" > .env && ./Docker/scripts/generate_database.sh
 
 RUN npm run build
 
+
+# Estágio 2: Criar a imagem final de produção
 FROM node:20-alpine AS final
 
 RUN apk update && \
@@ -47,8 +49,6 @@ COPY --from=builder /evolution/dist ./dist
 COPY --from=builder /evolution/prisma ./prisma
 COPY --from=builder /evolution/manager ./manager
 COPY --from=builder /evolution/public ./public
-# A LINHA ABAIXO TAMBÉM FOI REMOVIDA
-# COPY --from=builder /evolution/.env ./.env
 COPY --from=builder /evolution/Docker ./Docker
 COPY --from=builder /evolution/runWithProvider.js ./runWithProvider.js
 COPY --from=builder /evolution/tsup.config.ts ./tsup.config.ts
